@@ -1,0 +1,258 @@
+{
+  "missionTypes": {
+    "scout_endless": "侦察无尽",
+    "avoidance": "避险",
+    "expulsion": "驱逐",
+    "explore_endless": "探险无尽",
+    "mediate": "调停",
+    "drive_off": "驱离",
+    "escort": "护送",
+    "pursuit": "追缉",
+    "defend_endless": "扼守无尽",
+    "migrate": "迁移",
+    "character": "角色",
+    "weapon": "武器",
+    "magic_wedge": "魔之楔"
+  },
+  "menu": {
+    "commission": {
+      "displayName": "委托",
+      "children": {
+        "daily_commission": {
+          "displayName": "委托",
+          "missions": [
+            {
+              "key": "copper_coins",
+              "displayName": "铜币",
+              "type": "scout_endless",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "character_exp",
+              "displayName": "角色经验",
+              "type": "avoidance",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "weapon_exp",
+              "displayName": "武器经验",
+              "type": "expulsion",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "character_breakthrough",
+              "displayName": "角色突破材料",
+              "type": "explore_endless",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "weapon_breakthrough",
+              "displayName": "武器突破材料",
+              "type": "mediate",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "magic_wedge",
+              "displayName": "魔之楔",
+              "type": "drive_off",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "crimson_beads",
+              "displayName": "深红凝珠",
+              "type": "escort",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "character_skill_materials",
+              "displayName": "角色技能材料",
+              "type": "pursuit",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "resonator_skill_materials",
+              "displayName": "共鸣者技能材料",
+              "type": "defend_endless",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            },
+            {
+              "key": "forging_materials",
+              "displayName": "铸造材料",
+              "type": "migrate",
+              "levels": [
+                {"key": "lv10", "displayName": "LV10"},
+                {"key": "lv20", "displayName": "LV20"},
+                {"key": "lv30", "displayName": "LV30"},
+                {"key": "lv40", "displayName": "LV40"},
+                {"key": "lv50", "displayName": "LV50"},
+                {"key": "lv60", "displayName": "LV60"},
+                {"key": "lv70", "displayName": "LV70"}
+              ]
+            }
+          ]
+        },
+        "night_sailing_manual": {
+          "displayName": "夜航手册",
+          "missions": [
+            {
+              "key": "lv20",
+              "displayName": "LV20",
+              "type": "drive_off",
+              "levels": [
+                {"key": "bomb_dash_beast", "displayName": "爆破 疾冲秽兽"},
+                {"key": "crimson_guerrilla_beast", "displayName": "猩红 游击秽兽"},
+                {"key": "guard_floating_beast_ii", "displayName": "守护 飘浮秽兽Ⅱ"},
+                {"key": "frostburn_heart_beast", "displayName": "凛霜 灼心秽兽"},
+                {"key": "revenge_pioneer", "displayName": "复仇 蒙恩的先锋"},
+                {"key": "frost_prison_steward", "displayName": "霜狱 蒙恩的执事"}
+              ]
+            },
+            {
+              "key": "lv30",
+              "displayName": "LV30",
+              "type": "pursuit",
+              "levels": []
+            },
+            {
+              "key": "lv40",
+              "displayName": "LV40",
+              "type": "drive_off",
+              "levels": []
+            },
+            {
+              "key": "lv50",
+              "displayName": "LV50",
+              "type": "pursuit",
+              "levels": []
+            },
+            {
+              "key": "lv55",
+              "displayName": "LV55",
+              "type": "drive_off",
+              "levels": []
+            },
+            {
+              "key": "lv60",
+              "displayName": "LV60",
+              "type": "drive_off",
+              "levels": []
+            },
+            {
+              "key": "lv65",
+              "displayName": "LV65",
+              "type": "pursuit",
+              "levels": []
+            },
+            {
+              "key": "lv70",
+              "displayName": "LV70",
+              "type": "drive_off",
+              "levels": []
+            },
+            {
+              "key": "lv80",
+              "displayName": "LV80",
+              "type": "drive_off",
+              "levels": []
+            }
+          ]
+        },
+        "commission_letter": {
+          "displayName": "委托密函",
+          "missions": [
+            {
+              "key": "character",
+              "displayName": "角色",
+              "type": "character",
+              "levels": []
+            },
+            {
+              "key": "weapon",
+              "displayName": "武器",
+              "type": "weapon",
+              "levels": []
+            },
+            {
+              "key": "magic_wedge_letter",
+              "displayName": "魔之楔",
+              "type": "magic_wedge",
+              "levels": []
+            }
+          ]
+        }
+      }
+    }
+  }
+}
