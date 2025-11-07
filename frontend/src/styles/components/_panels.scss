@@ -1,0 +1,141 @@
+// 面板组件样式
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: $white;
+  border-radius: $border-radius-base;
+  @include card-shadow();
+
+  &__header {
+    padding: $spacing-lg;
+    border-bottom: 1px solid $gray-3;
+    background: $white;
+    border-radius: $border-radius-base $border-radius-base 0 0;
+
+    h3 {
+      margin: 0;
+      font-size: $font-size-lg;
+      font-weight: 600;
+      color: $gray-9;
+    }
+  }
+
+  &__content {
+    flex: 1;
+    padding: $spacing-lg;
+    overflow-y: auto;
+    @include custom-scrollbar();
+  }
+
+  &__footer {
+    padding: $spacing-md $spacing-lg;
+    border-top: 1px solid $gray-3;
+    background: $gray-1;
+    border-radius: 0 0 $border-radius-base $border-radius-base;
+  }
+
+  // 不同状态的面板
+  &--loading {
+    @include flex-center();
+
+    &::before {
+      content: '';
+      width: 40px;
+      height: 40px;
+      border: 3px solid $gray-3;
+      border-top: 3px solid $primary-color;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  &--error {
+    .panel__content {
+      @include flex-center();
+      flex-direction: column;
+      color: $error-color;
+      text-align: center;
+    }
+  }
+
+  &--empty {
+    .panel__content {
+      @include flex-center();
+      flex-direction: column;
+      color: $gray-6;
+      text-align: center;
+    }
+  }
+}
+
+// 动画
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// 特定面板样式
+.commission-panel {
+  .panel__content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+}
+
+.training-panel {
+  .panel__content {
+    @include make-grid(1, $spacing-lg);
+
+    @include respond-from(md) {
+      @include make-grid(2, $spacing-lg);
+    }
+  }
+}
+
+.keyboard-panel {
+  .panel__content {
+    .shortcut-list {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacing-sm $spacing-md;
+      border-radius: $border-radius-sm;
+      background: $gray-1;
+      transition: $transition-fast;
+
+      &:hover {
+        background: $gray-2;
+      }
+    }
+  }
+}
+
+.macro-panel {
+  .panel__content {
+    .macro-list {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+    }
+
+    .macro-item {
+      padding: $spacing-md;
+      border: 1px solid $gray-3;
+      border-radius: $border-radius-base;
+      transition: $transition-fast;
+
+      &:hover {
+        border-color: $primary-color;
+        @include card-shadow('lg');
+      }
+    }
+  }
+}

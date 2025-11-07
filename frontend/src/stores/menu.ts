@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { MenuConfig, Mission, SubCategory } from '@/types'
-import { DEFAULT_MENU_CONFIG } from '@/types'
+import { defineStore } from "pinia"
+import { ref, computed } from "vue"
+import type { MenuConfig, SubCategory } from "@/types"
+import { MISSION_TYPES_CONFIG, MENU_STRUCTURE_CONFIG } from "@/constants"
 
-export const useMenuStore = defineStore('menu', () => {
+export const useMenuStore = defineStore("menu", () => {
   // 状态
   const loading = ref<boolean>(false)
   const config = ref<MenuConfig | null>(null)
@@ -18,7 +18,7 @@ export const useMenuStore = defineStore('menu', () => {
     return Object.entries(config.value.menu).map(([key, section]) => ({
       key,
       displayName: section.displayName,
-      ...section
+      children: section.children,
     }))
   })
 
@@ -29,11 +29,14 @@ export const useMenuStore = defineStore('menu', () => {
       const mainSection = (config.value.menu as any)[mainKey]
       if (!mainSection?.children) return []
 
-      return Object.entries(mainSection.children).map(([key, subCategory]) => ({
-        key,
-        displayName: subCategory.displayName,
-        missions: subCategory.missions
-      }))
+      return Object.entries(mainSection.children).map(([key, subCategory]) => {
+        const category = subCategory as SubCategory
+        return {
+          key,
+          displayName: category.displayName,
+          missions: category.missions,
+        }
+      })
     }
   })
 
@@ -55,7 +58,7 @@ export const useMenuStore = defineStore('menu', () => {
       error.value = null
 
       // 从静态文件加载配置
-      const response = await fetch('/menu_config.json')
+      const response = await fetch("/menu_config.json")
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -65,21 +68,22 @@ export const useMenuStore = defineStore('menu', () => {
 
       // 验证数据格式
       if (!data.missionTypes || !data.menu?.commission) {
-        throw new Error('菜单配置格式错误')
+        throw new Error("菜单配置格式错误")
       }
 
       config.value = data
-      console.log('菜单配置加载成功:', data)
-
+      console.log("菜单配置加载成功:", data)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '加载菜单配置失败'
-      console.error('加载菜单配置失败:', err)
+      const errorMessage = err instanceof Error ? err.message : "加载菜单配置失败"
+      console.error("加载菜单配置失败:", err)
       error.value = errorMessage
 
       // 使用默认配置作为降级方案
-      console.warn('使用默认菜单配置')
-      config.value = DEFAULT_MENU_CONFIG
-
+      console.warn("使用默认菜单配置")
+      config.value = {
+        missionTypes: MISSION_TYPES_CONFIG,
+        menu: MENU_STRUCTURE_CONFIG,
+      }
     } finally {
       loading.value = false
     }
@@ -89,7 +93,12 @@ export const useMenuStore = defineStore('menu', () => {
     if (!config.value) {
       await loadMenuConfig()
     }
-    return config.value || DEFAULT_MENU_CONFIG
+    return (
+      config.value || {
+        missionTypes: MISSION_TYPES_CONFIG,
+        menu: MENU_STRUCTURE_CONFIG,
+      }
+    )
   }
 
   const ensureSubCategoriesLoaded = async (mainCategory: string): Promise<SubCategory[]> => {
@@ -99,7 +108,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   const getSubCategoryByKey = computed<(mainKey: string, subKey: string) => SubCategory | undefined>(() => {
     return (mainKey: string, subKey: string) => {
-      return getSubCategories.value(mainKey).find(sub => sub.key === subKey)
+      return getSubCategories.value(mainKey).find((sub) => sub.key === subKey)
     }
   })
 
@@ -138,6 +147,6 @@ export const useMenuStore = defineStore('menu', () => {
     ensureSubCategoriesLoaded,
     clearError,
     reset,
-    reloadConfig
+    reloadConfig,
   }
 })

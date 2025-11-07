@@ -1,0 +1,105 @@
+// SCSS 使用示例文件
+// 展示如何在 Vue 组件中使用 SCSS 特性
+
+.example-component {
+  // 使用变量
+  padding: $spacing-lg;
+  margin: $spacing-md;
+  background: $white;
+  border-radius: $border-radius-base;
+  box-shadow: $box-shadow-base;
+
+  // 使用嵌套语法
+  .header {
+    font-size: $font-size-lg;
+    color: $gray-9;
+    margin-bottom: $spacing-md;
+
+    .title {
+      font-weight: 600;
+
+      // 使用伪选择器
+      &:hover {
+        color: $primary-color;
+        transition: $transition-base;
+      }
+    }
+  }
+
+  .content {
+    line-height: 1.6;
+    color: $gray-7;
+
+    // 使用循环生成样式
+    @for $i from 1 through 3 {
+      .heading-#{$i} {
+        font-size: $font-size-base + ($i * 2px);
+        margin-bottom: $spacing-sm;
+      }
+    }
+  }
+
+  // 使用混入
+  .button {
+    @include button-variant($white, $primary-color, $primary-color);
+    padding: $spacing-sm $spacing-md;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+
+    // 响应式设计
+    @include respond-to(xs) {
+      width: 100%;
+      margin-bottom: $spacing-sm;
+    }
+  }
+
+  // 使用条件判断
+  .status {
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-sm;
+
+    &--success {
+      background: rgba($success-color, 0.1);
+      color: $success-color;
+    }
+
+    &--warning {
+      background: rgba($warning-color, 0.1);
+      color: $warning-color;
+    }
+
+    &--error {
+      background: rgba($error-color, 0.1);
+      color: $error-color;
+    }
+  }
+
+  // 使用函数
+  .fade-text {
+    color: rgba($gray-6, 0.6);
+  }
+
+  // 使用扩展
+  .card {
+    @extend .panel;
+    border: 1px solid $gray-3;
+  }
+
+  // 动画
+  .animated {
+    @include fade-in(0.5s);
+  }
+
+  // 自定义滚动条
+  .scroll-area {
+    max-height: 300px;
+    overflow-y: auto;
+    @include custom-scrollbar();
+  }
+}
+
+// 使用多个选择器
+.sidebar, .main-content {
+  @include custom-scrollbar(6px, $gray-2, $gray-4);
+}

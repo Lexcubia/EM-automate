@@ -1,0 +1,271 @@
+// 导入变量
+@import './variables.scss';
+
+// 重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  color: $gray-8;
+  background-color: $gray-1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $gray-1;
+  border-radius: $border-radius-base;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $gray-5;
+  border-radius: $border-radius-base;
+
+  &:hover {
+    background: $gray-6;
+  }
+}
+
+// 通用工具类
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+// 间距工具类
+@each $prop in (margin, padding) {
+  @each $size, $value in (xs: $spacing-xs, sm: $spacing-sm, md: $spacing-md, lg: $spacing-lg, xl: $spacing-xl) {
+    .#{$prop}-#{$size} {
+      #{$prop}: $value;
+    }
+
+    .#{$prop}-t-#{$size} {
+      #{$prop}-top: $value;
+    }
+
+    .#{$prop}-r-#{$size} {
+      #{$prop}-right: $value;
+    }
+
+    .#{$prop}-b-#{$size} {
+      #{$prop}-bottom: $value;
+    }
+
+    .#{$prop}-l-#{$size} {
+      #{$prop}-left: $value;
+    }
+
+    .#{$prop}-x-#{$size} {
+      #{$prop}-left: $value;
+      #{$prop}-right: $value;
+    }
+
+    .#{$prop}-y-#{$size} {
+      #{$prop}-top: $value;
+      #{$prop}-bottom: $value;
+    }
+  }
+}
+
+// 文字颜色
+.text-primary {
+  color: $primary-color;
+}
+
+.text-success {
+  color: $success-color;
+}
+
+.text-warning {
+  color: $warning-color;
+}
+
+.text-error {
+  color: $error-color;
+}
+
+.text-info {
+  color: $info-color;
+}
+
+.text-muted {
+  color: $gray-6;
+}
+
+// 背景色
+.bg-primary {
+  background-color: $primary-color;
+}
+
+.bg-success {
+  background-color: $success-color;
+}
+
+.bg-warning {
+  background-color: $warning-color;
+}
+
+.bg-error {
+  background-color: $error-color;
+}
+
+.bg-info {
+  background-color: $info-color;
+}
+
+.bg-light {
+  background-color: $gray-1;
+}
+
+.bg-dark {
+  background-color: $gray-9;
+}
+
+// 圆角
+.rounded {
+  border-radius: $border-radius-base;
+}
+
+.rounded-sm {
+  border-radius: $border-radius-sm;
+}
+
+.rounded-lg {
+  border-radius: $border-radius-lg;
+}
+
+.rounded-full {
+  border-radius: 50%;
+}
+
+// 阴影
+.shadow {
+  box-shadow: $box-shadow-base;
+}
+
+.shadow-sm {
+  box-shadow: $box-shadow-sm;
+}
+
+.shadow-none {
+  box-shadow: none;
+}
+
+// 过渡动画
+.transition {
+  transition: $transition-base;
+}
+
+.transition-fast {
+  transition: $transition-fast;
+}
+
+// 响应式工具类
+@media (max-width: $screen-sm) {
+  .hidden-xs {
+    display: none !important;
+  }
+}
+
+@media (max-width: $screen-md) {
+  .hidden-sm {
+    display: none !important;
+  }
+}
+
+@media (max-width: $screen-lg) {
+  .hidden-md {
+    display: none !important;
+  }
+}
+
+@media (max-width: $screen-xl) {
+  .hidden-lg {
+    display: none !important;
+  }
+}
+
+@media (min-width: $screen-sm) {
+  .visible-sm {
+    display: block !important;
+  }
+}
+
+@media (min-width: $screen-md) {
+  .visible-md {
+    display: block !important;
+  }
+}
+
+@media (min-width: $screen-lg) {
+  .visible-lg {
+    display: block !important;
+  }
+}
+
+@media (min-width: $screen-xl) {
+  .visible-xl {
+    display: block !important;
+  }
+}

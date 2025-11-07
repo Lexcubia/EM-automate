@@ -6,7 +6,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import { onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'

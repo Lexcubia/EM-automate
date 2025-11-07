@@ -25,7 +25,7 @@ export interface TaskConfig {
 // 任务状态类型
 export interface TaskStatus {
   id: string
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'paused'
+  status: "pending" | "running" | "completed" | "failed" | "paused"
   progress: number
   message: string
   start_time?: string
@@ -65,7 +65,7 @@ export interface BackendConfig {
 // 应用配置类型
 export interface AppConfig {
   backend: BackendConfig
-  theme: 'light' | 'dark'
+  theme: "light" | "dark"
   language: string
   auto_start: boolean
   minimize_to_tray: boolean
@@ -94,7 +94,7 @@ export interface Category {
 export interface Mission {
   id: string
   name: string
-  type: 'commission' | 'night_sailing' | 'commission_letter'
+  type: "commission" | "night_sailing" | "commission_letter"
   level: number
   description?: string
   requirements?: Record<string, any>
@@ -109,7 +109,7 @@ export interface QueueItem {
   level?: number
   monster?: string
   priority: number
-  status: TaskStatus['status']
+  status: TaskStatus["status"]
   progress: number
   added_at: string
   started_at?: string
@@ -154,7 +154,7 @@ export interface ApiError extends Error {
 // 请求配置类型
 export interface RequestConfig {
   url: string
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
   data?: any
   params?: Record<string, any>
   headers?: Record<string, string>
@@ -167,6 +167,9 @@ export interface RouteMeta {
   icon?: string
   requiresAuth?: boolean
   keepAlive?: boolean
+  menuKey?: string
+  menuOrder?: number
+  [key: string]: any // 允许额外的属性
 }
 
 // 组件 Props 类型通用接口
@@ -182,8 +185,7 @@ export interface ComponentEvents {
 }
 
 // Vue 组件类型
-export type VueComponent<T extends ComponentEvents = {}> = ComponentPublicInstance &
-  T
+export type VueComponent<T extends ComponentEvents = {}> = ComponentPublicInstance & T
 
 // ==================
 // 菜单配置相关类型
@@ -224,40 +226,17 @@ export interface MenuConfig {
   }
 }
 
+// 重新导出常量配置（保持向后兼容）
+export {
+  MISSION_TYPES_CONFIG,
+  MENU_STRUCTURE_CONFIG
+} from '@/constants'
+
+// 导入配置用于默认配置
+import { MISSION_TYPES_CONFIG as MissionTypes, MENU_STRUCTURE_CONFIG as MenuStructure } from '@/constants'
+
 // 默认菜单配置（用于降级）
 export const DEFAULT_MENU_CONFIG: MenuConfig = {
-  missionTypes: {
-    scout_endless: "侦察无尽",
-    avoidance: "避险",
-    expulsion: "驱逐",
-    explore_endless: "探险无尽",
-    mediate: "调停",
-    drive_off: "驱离",
-    escort: "护送",
-    pursuit: "追缉",
-    defend_endless: "扼守无尽",
-    migrate: "迁移",
-    character: "角色",
-    weapon: "武器",
-    magic_wedge: "魔之楔"
-  },
-  menu: {
-    commission: {
-      displayName: "委托",
-      children: {
-        daily_commission: {
-          displayName: "委托",
-          missions: []
-        },
-        night_sailing_manual: {
-          displayName: "夜航手册",
-          missions: []
-        },
-        commission_letter: {
-          displayName: "委托密函",
-          missions: []
-        }
-      }
-    }
-  }
+  missionTypes: MissionTypes,
+  menu: MenuStructure,
 }

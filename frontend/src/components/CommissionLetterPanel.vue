@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Empty } from 'ant-design-vue'
 
 // 这个组件目前是占位符

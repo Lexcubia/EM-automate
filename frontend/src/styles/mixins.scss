@@ -1,0 +1,216 @@
+// 响应式混入
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == xs {
+    @media (max-width: $screen-xs) { @content; }
+  }
+  @if $breakpoint == sm {
+    @media (max-width: $screen-sm) { @content; }
+  }
+  @if $breakpoint == md {
+    @media (max-width: $screen-md) { @content; }
+  }
+  @if $breakpoint == lg {
+    @media (max-width: $screen-lg) { @content; }
+  }
+  @if $breakpoint == xl {
+    @media (max-width: $screen-xl) { @content; }
+  }
+}
+
+@mixin respond-from($breakpoint) {
+  @if $breakpoint == sm {
+    @media (min-width: $screen-sm) { @content; }
+  }
+  @if $breakpoint == md {
+    @media (min-width: $screen-md) { @content; }
+  }
+  @if $breakpoint == lg {
+    @media (min-width: $screen-lg) { @content; }
+  }
+  @if $breakpoint == xl {
+    @media (min-width: $screen-xl) { @content; }
+  }
+  @if $breakpoint == xxl {
+    @media (min-width: $screen-xxl) { @content; }
+  }
+}
+
+// 文字省略
+@mixin text-ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 居中对齐
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 按钮样式
+@mixin button-variant($color, $background, $border) {
+  color: $color;
+  background-color: $background;
+  border-color: $border;
+
+  &:hover,
+  &:focus {
+    color: $color;
+    background-color: darken($background, 10%);
+    border-color: darken($border, 12%);
+  }
+
+  &:active {
+    color: $color;
+    background-color: darken($background, 12%);
+    border-color: darken($border, 14%);
+  }
+
+  &:disabled {
+    color: rgba($color, 0.6);
+    background-color: lighten($background, 15%);
+    border-color: lighten($border, 20%);
+    cursor: not-allowed;
+  }
+}
+
+// 卡片样式
+@mixin card-shadow($level: 'base') {
+  @if $level == 'sm' {
+    box-shadow: $box-shadow-sm;
+  } @else if $level == 'lg' {
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.08),
+                0 9px 28px 0 rgba(0, 0, 0, 0.05),
+                0 12px 48px 16px rgba(0, 0, 0, 0.03);
+  } @else {
+    box-shadow: $box-shadow-base;
+  }
+}
+
+// 输入框样式
+@mixin input-focus {
+  &:focus,
+  &:focus-within {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+    outline: none;
+  }
+}
+
+// 动画
+@mixin fade-in($duration: 0.3s) {
+  opacity: 0;
+  animation: fadeIn $duration ease-in-out forwards;
+}
+
+@mixin slide-up($distance: 20px, $duration: 0.3s) {
+  transform: translateY($distance);
+  opacity: 0;
+  animation: slideUp $duration ease-out forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// 滚动条样式
+@mixin custom-scrollbar($width: 8px, $track-color: $gray-1, $thumb-color: $gray-5) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+    border-radius: $border-radius-base;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $border-radius-base;
+
+    &:hover {
+      background: darken($thumb-color, 10%);
+    }
+  }
+}
+
+// 渐变背景
+@mixin gradient-bg($start-color, $end-color, $direction: 135deg) {
+  background: linear-gradient($direction, $start-color 0%, $end-color 100%);
+}
+
+// 响应式字体大小
+@mixin responsive-font($min-size, $max-size, $min-vw: 320px, $max-vw: 1200px) {
+  font-size: $min-size;
+
+  @media (min-width: $min-vw) and (max-width: $max-vw) {
+    font-size: calc(
+      #{$min-size} + #{strip-unit($max-size - $min-size)} *
+      (100vw - #{$min-vw}) / #{strip-unit($max-vw - $min-vw)}
+    );
+  }
+
+  @media (min-width: $max-vw) {
+    font-size: $max-size;
+  }
+}
+
+// 工具函数：移除单位
+@function strip-unit($number) {
+  @if type-of($number) == 'number' and not unitless($number) {
+    @return $number / ($number * 0 + 1);
+  }
+  @return $number;
+}
+
+// 网格系统
+@mixin make-grid($columns: 12, $gutter: $spacing-md) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: $gutter;
+}
+
+// Flexbox 工具类
+@mixin flex-setup($direction: row, $justify: flex-start, $align: stretch, $wrap: nowrap) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  flex-wrap: $wrap;
+}

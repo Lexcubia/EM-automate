@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // 暂时移除图标，避免导入问题
 </script>
 
