@@ -15,12 +15,12 @@
       >
         <div class="task-content">
           <div class="task-info">
-            <div class="task-name">{{ task.display_name }}</div>
+            <div class="task-name">{{ task.display_name || task.name }}</div>
             <div class="task-meta">
               <a-tag size="small" color="blue">
-                {{ missionTypeDisplay(task.mission_type) }}
+                {{ missionTypeDisplay(task.mission_type || task.type || '') }}
               </a-tag>
-              <span class="task-count">x{{ task.run_count }}</span>
+              <span class="task-count">x{{ task.run_count || 1 }}</span>
             </div>
           </div>
 
@@ -31,7 +31,7 @@
               :max="99"
               size="small"
               :disabled="isRunning"
-              @change="(value) => updateTaskCount(task.id, value)"
+              @change="(value: number) => updateTaskCount(task.id, value)"
               style="width: 60px"
             />
           </div>
@@ -109,39 +109,56 @@ import {
 import { Empty } from 'ant-design-vue'
 import { useMenuStore } from '@/stores/menu'
 
-const props = defineProps({
-  tasks: {
-    type: Array,
-    default: () => []
-  },
-  isRunning: {
-    type: Boolean,
-    default: false
-  },
-  currentProgress: {
-    type: Object,
-    default: () => ({
-      current: 0,
-      total: 0,
-      status: '',
-      isRunning: false
-    })
-  }
-})
+// 任务项类型定义 - 使用更宽松的类型以兼容store中的类型
+interface QueueTask {
+  id: string
+  display_name?: string  // 可选，因为store中可能有name
+  name?: string         // 可选，兼容store字段
+  mission_type?: string // 可选，因为store中可能有type
+  type?: string         // 可选，兼容store字段
+  run_count?: number
+  selected_level?: string
+  level_display_name?: string
+  category?: string
+  sub_category?: string
+  mission_key?: string
+  monster?: string
+  level?: number
+  priority?: number
+  status?: string
+  progress?: number
+  added_at?: string
+  addedAt?: string       // 兼容旧字段名
+  started_at?: string
+  completed_at?: string
+  error?: string
+  params?: Record<string, any>
+}
 
-const emit = defineEmits([
-  'remove-task',
-  'move-up',
-  'move-down',
-  'update-task'
-])
+const props = defineProps<{
+  tasks: QueueTask[]
+  isRunning: boolean
+  currentProgress: {
+    current: number
+    total: number
+    status: string
+    isRunning: boolean
+  }
+}>()
+
+const emit = defineEmits<{
+  'remove-task': [taskId: string]
+  'move-up': [taskId: string]
+  'move-down': [taskId: string]
+  'update-task': [taskId: string, data: { run_count: number }]
+}>()
 
 // Store
 const menuStore = useMenuStore()
 
 // 计算属性
 const totalTasks = computed(() => {
-  return props.tasks.reduce((sum, task) => sum + task.run_count, 0)
+  return props.tasks.reduce((sum, task) => sum + (task.run_count || 1), 0)
 })
 
 const estimatedTime = computed(() => {
@@ -150,34 +167,34 @@ const estimatedTime = computed(() => {
 })
 
 // 方法
-const missionTypeDisplay = (type) => {
+const missionTypeDisplay = (type: string): string => {
   return menuStore.getMissionTypeDisplay(type)
 }
 
-const removeTask = (taskId) => {
+const removeTask = (taskId: string): void => {
   emit('remove-task', taskId)
 }
 
-const moveUp = (taskId) => {
+const moveUp = (taskId: string): void => {
   emit('move-up', taskId)
 }
 
-const moveDown = (taskId) => {
+const moveDown = (taskId: string): void => {
   emit('move-down', taskId)
 }
 
-const updateTaskCount = (taskId, count) => {
+const updateTaskCount = (taskId: string, count: number): void => {
   if (count && count >= 1 && count <= 99) {
     emit('update-task', taskId, { run_count: count })
   }
 }
 
-const getTaskProgress = (task) => {
+const getTaskProgress = (task: QueueTask): number => {
   if (!props.isRunning) return 0
 
   // 简单的进度计算，实际应该基于更精确的逻辑
   const overallProgress = props.currentProgress.current / props.currentProgress.total
-  const taskWeight = task.run_count / totalTasks.value
+  const taskWeight = (task.run_count || 1) / totalTasks.value
 
   return Math.min(100, Math.round(overallProgress * 100 / taskWeight))
 }

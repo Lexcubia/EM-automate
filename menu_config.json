@@ -1,14 +1,14 @@
 {
   "missionTypes": {
-    "scout_endless": "侦察无尽",
+    "scout_endless": "侦察",
     "avoidance": "避险",
     "expulsion": "驱逐",
-    "explore_endless": "探险无尽",
+    "explore_endless": "探险",
     "mediate": "调停",
     "drive_off": "驱离",
     "escort": "护送",
     "pursuit": "追缉",
-    "defend_endless": "扼守无尽",
+    "defend_endless": "扼守",
     "migrate": "迁移",
     "character": "角色",
     "weapon": "武器",
@@ -25,6 +25,7 @@
               "key": "copper_coins",
               "displayName": "铜币",
               "type": "scout_endless",
+              "infinity": true,
               "levels": [
                 {"key": "lv10", "displayName": "LV10"},
                 {"key": "lv20", "displayName": "LV20"},
@@ -67,6 +68,7 @@
               "key": "character_breakthrough",
               "displayName": "角色突破材料",
               "type": "explore_endless",
+              "infinity": true,
               "levels": [
                 {"key": "lv10", "displayName": "LV10"},
                 {"key": "lv20", "displayName": "LV20"},
@@ -135,8 +137,9 @@
             },
             {
               "key": "resonator_skill_materials",
-              "displayName": "共鸣者技能材料",
+              "displayName": "角色技能材料",
               "type": "defend_endless",
+              "infinity": true,
               "levels": [
                 {"key": "lv10", "displayName": "LV10"},
                 {"key": "lv20", "displayName": "LV20"},

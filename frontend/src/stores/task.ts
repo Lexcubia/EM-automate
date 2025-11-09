@@ -58,11 +58,11 @@ export const useTaskStore = defineStore('task', () => {
   })
 
   // 方法
-  const addTask = (task: Omit<ExtendedQueueItem, 'id' | 'addedAt'>): void => {
+  const addTask = (task: Omit<ExtendedQueueItem, 'id' | 'added_at'>): void => {
     const taskWithId: ExtendedQueueItem = {
       ...task,
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      addedAt: new Date().toISOString(),
+      added_at: new Date().toISOString(),
       status: 'pending',
       progress: 0
     }

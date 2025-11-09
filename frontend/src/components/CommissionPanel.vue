@@ -2,7 +2,7 @@
   <div class="commission-panel">
     <a-row :gutter="16">
       <!-- 任务选择 -->
-      <a-col :span="14">
+      <a-col :span="16">
         <div class="section">
           <h4>选择任务</h4>
           <a-radio-group
@@ -16,17 +16,22 @@
               :value="mission.key"
               class="mission-radio"
             >
-              {{ mission.displayName }}
-              <a-tag size="small" class="mission-type-tag">
-                {{ missionTypeDisplay(mission.type) }}
-              </a-tag>
+              <span class="mission-content">
+                <span class="mission-name">{{ mission.displayName }}</span>
+                <span class="mission-tags">
+                  <a-tag v-if="mission.infinity" size="small" color="purple" class="mission-type-tag">无尽</a-tag>
+                  <a-tag size="small" color="blue" class="mission-type-tag">
+                    {{ missionTypeDisplay(mission.type) }}
+                  </a-tag>
+                </span>
+              </span>
             </a-radio>
           </a-radio-group>
         </div>
       </a-col>
 
       <!-- 等级选择 -->
-      <a-col :span="10">
+      <a-col :span="8">
         <div class="section">
           <h4>选择等级</h4>
           <a-radio-group
@@ -104,6 +109,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { useMenuStore } from '@/stores/menu'
+import type { Mission } from '@/types'
 
 const emit = defineEmits(['task-selected'])
 
@@ -114,7 +120,7 @@ const menuStore = useMenuStore()
 const selectedMission = ref('')
 const selectedLevel = ref('')
 const runCount = ref(1)
-const missions = ref([])
+const missions = ref<Mission[]>([])
 
 // 计算属性
 const currentMission = computed(() => {
@@ -146,7 +152,7 @@ const onMissionChange = () => {
   selectedLevel.value = ''
 }
 
-const missionTypeDisplay = (type) => {
+const missionTypeDisplay = (type: string) => {
   return menuStore.getMissionTypeDisplay(type)
 }
 
@@ -197,13 +203,14 @@ const quickAddAllLevels = () => {
 }
 
 const quickAddSelectedMission = () => {
-  if (!currentMission.value) return
+  const mission = currentMission.value
+  if (!mission) return
 
-  currentMission.value.levels.forEach(level => {
+  mission.levels.forEach(level => {
     const task = {
-      mission_key: currentMission.value.key,
-      display_name: `${currentMission.value.displayName}(${level.displayName})`,
-      mission_type: currentMission.value.type,
+      mission_key: mission.key,
+      display_name: `${mission.displayName}(${level.displayName})`,
+      mission_type: mission.type,
       selected_level: level.key,
       level_display_name: level.displayName,
       run_count: 1,
@@ -246,27 +253,34 @@ onMounted(async () => {
 
 .mission-radio,
 .level-radio {
-  display: block;
+  display: flex;
   margin-bottom: 8px;
   padding: 8px 12px;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
   transition: all 0.3s;
 }
-
 .mission-radio:hover,
 .level-radio:hover {
   border-color: #40a9ff;
   background-color: #f6ffed;
 }
-
-.mission-radio :deep(.ant-radio-wrapper),
-.level-radio :deep(.ant-radio-wrapper) {
-  align-items: flex-start;
+:deep(.mission-radio span.ant-radio+*){
   width: 100%;
+  padding-inline-end: 0
 }
 
+
+.mission-content {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* .mission-tags {
+ 
+} */
 .mission-type-tag {
+  margin-inline: 0;
   margin-left: 8px;
   font-size: 10px;
 }

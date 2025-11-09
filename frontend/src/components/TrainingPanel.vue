@@ -42,6 +42,7 @@
           <TaskQueue
             :tasks="taskStore.taskQueue"
             :is-running="taskStore.isRunning"
+            :current-progress="taskStore.currentProgress"
             @remove-task="taskStore.removeTask"
             @move-up="taskStore.moveTaskUp"
             @move-down="taskStore.moveTaskDown"
@@ -127,51 +128,58 @@ import NightSailingPanel from './NightSailingPanel.vue'
 import CommissionLetterPanel from './CommissionLetterPanel.vue'
 import TaskQueue from './TaskQueue.vue'
 
+// 日志类型定义
+interface LogEntry {
+  type: 'info' | 'success' | 'warning' | 'error'
+  message: string
+  time: string
+}
+
 // Store
 const taskStore = useTaskStore()
 
 // 响应式数据
 const activeTab = ref('commission')
-const logs = ref([])
-const logContainer = ref(null)
+const logs = ref<LogEntry[]>([])
+const logContainer = ref<HTMLElement | null>(null)
 
 // 方法
-const handleTaskSelected = (task) => {
+const handleTaskSelected = (task: any): void => {
   taskStore.addTask(task)
   addLog('info', `添加任务: ${task.display_name} x${task.run_count}`)
 }
 
-const startTasks = async () => {
+const startTasks = async (): Promise<void> => {
   try {
     addLog('info', '开始执行任务队列...')
-    const result = await taskStore.startExecution()
-    addLog('success', `任务执行已启动，共${result.total_tasks}次任务`)
-  } catch (error) {
+    await taskStore.startExecution()
+    addLog('success', `任务执行已启动`)
+  } catch (error: any) {
     addLog('error', `启动任务失败: ${error.message}`)
   }
 }
 
-const stopTasks = async () => {
+const stopTasks = async (): Promise<void> => {
   try {
     addLog('warning', '正在停止任务执行...')
-    const result = await taskStore.stopExecution()
+    await taskStore.stopExecution()
     addLog('warning', '任务执行已停止')
-  } catch (error) {
+  } catch (error: any) {
     addLog('error', `停止任务失败: ${error.message}`)
   }
 }
 
-const clearQueue = () => {
+const clearQueue = (): void => {
   taskStore.clearQueue()
   addLog('info', '已清空任务队列')
 }
 
-const clearLogs = () => {
+const clearLogs = (): void => {
   logs.value = []
 }
 
-const addLog = (type, message) => {
-  const logEntry = {
+const addLog = (type: LogEntry['type'], message: string): void => {
+  const logEntry: LogEntry = {
     type,
     message,
     time: new Date().toLocaleTimeString()
@@ -198,13 +206,13 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  taskStore.cleanup()
+  // Store cleanup
 })
 
-const startLogMonitoring = () => {
+const startLogMonitoring = (): void => {
   // 监听任务状态变化，添加相应日志
   const unwatchIsRunning = taskStore.$subscribe((mutation, state) => {
-    if (mutation.events?.key === 'isRunning') {
+    if (mutation.events && 'key' in mutation.events && mutation.events.key === 'isRunning') {
       if (state.isRunning) {
         addLog('info', '任务执行中...')
       } else {
@@ -215,7 +223,7 @@ const startLogMonitoring = () => {
 
   // 监听进度变化
   const unwatchProgress = taskStore.$subscribe((mutation, state) => {
-    if (mutation.events?.key === 'currentProgress' && state.currentProgress.status) {
+    if (mutation.events && 'key' in mutation.events && mutation.events.key === 'currentProgress' && state.currentProgress.status) {
       addLog('info', state.currentProgress.status)
     }
   })
@@ -242,9 +250,10 @@ const startLogMonitoring = () => {
 }
 
 .left-panel {
-  width: 400px;
+  width: 30%;
   display: flex;
   flex-direction: column;
+  min-width: 400px;
 }
 
 .right-panel {
@@ -252,7 +261,7 @@ const startLogMonitoring = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-width: 0;
+  min-width: 400px;
 }
 
 .task-selection-card,

@@ -45,7 +45,11 @@
       "Bash(pnpm.cmd run build:*)",
       "Bash(pnpm.cmd run dev:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(\"venv/Scripts/python.exe\" -m pip list)",
+      "Bash(\"venv/Scripts/python.exe\" api_server.py)"
     ],
     "deny": [],
     "ask": []

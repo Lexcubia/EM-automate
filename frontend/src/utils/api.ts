@@ -29,7 +29,7 @@ const api: AxiosInstance = axios.create({
 
 // 请求拦截器
 api.interceptors.request.use(
-  (config: ExtendedAxiosRequestConfig): ExtendedAxiosRequestConfig => {
+  (config): any => {
     const appStore = useAppStore()
 
     // 设置基础URL
@@ -37,8 +37,8 @@ api.interceptors.request.use(
       config.baseURL = `http://${appStore.backendConfig.host}:${appStore.backendConfig.port}`
     }
 
-    // 添加请求时间戳
-    config.metadata = { startTime: new Date() }
+    // 添加请求时间戳到自定义属性
+    ;(config as any).metadata = { startTime: new Date() }
 
     // 开发模式下打印请求信息
     if (import.meta.env.DEV && window.debugAPI) {
@@ -58,7 +58,8 @@ api.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => {
     // 计算请求耗时
     const endTime = new Date()
-    const duration = endTime - (response.config as ExtendedAxiosRequestConfig).metadata!.startTime
+    const startTime = (response.config as any).metadata?.startTime
+    const duration = startTime ? endTime.getTime() - startTime.getTime() : 0
 
     // 开发模式下打印响应信息
     if (import.meta.env.DEV && window.debugAPI) {
@@ -165,6 +166,104 @@ export const apiUtils = {
   // 通用 DELETE 请求
   async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     const response = await api.delete<ApiResponse<T>>(url, config)
+    return response.data
+  }
+}
+
+// 键位配置相关API
+export const keybindingsApi = {
+  // 获取键位配置
+  async getKeybindings() {
+    const response = await api.get('/api/keybindings')
+    return response.data
+  },
+
+  // 更新键位配置
+  async updateKeybinding(action: string, key: string) {
+    const response = await api.post('/api/keybindings/update', { action, key })
+    return response.data
+  },
+
+  // 执行键位操作
+  async executeKeybinding(action: string, pressType: string = 'press', duration: number = 0.1) {
+    const response = await api.post('/api/keybindings/execute', {
+      action,
+      press_type: pressType,
+      duration
+    })
+    return response.data
+  },
+
+  // 导出配置
+  async exportConfig(filePath: string) {
+    const response = await api.post('/api/keybindings/export', null, {
+      params: { file_path: filePath }
+    })
+    return response.data
+  },
+
+  // 导入配置
+  async importConfig(filePath: string) {
+    const response = await api.post('/api/keybindings/import', null, {
+      params: { file_path: filePath }
+    })
+    return response.data
+  },
+
+  // 重置配置
+  async resetConfig() {
+    const response = await api.post('/api/keybindings/reset')
+    return response.data
+  }
+}
+
+// 菜单配置相关API
+export const menuApi = {
+  // 获取完整菜单配置
+  async getMenuConfig() {
+    const response = await api.get('/api/menu/config')
+    return response.data
+  },
+
+  // 获取任务类型映射
+  async getMissionTypes() {
+    const response = await api.get('/api/menu/mission-types')
+    return response.data
+  },
+
+  // 获取任务类型显示名称
+  async getMissionTypeDisplay(missionType: string) {
+    const response = await api.get(`/api/menu/mission-types/${missionType}`)
+    return response.data
+  },
+
+  // 获取主分类列表
+  async getMainCategories() {
+    const response = await api.get('/api/menu/main-categories')
+    return response.data
+  },
+
+  // 获取子分类列表
+  async getSubCategories(mainCategory: string) {
+    const response = await api.get(`/api/menu/sub-categories/${mainCategory}`)
+    return response.data
+  },
+
+  // 获取任务列表
+  async getMissions(mainCategory: string, subCategory: string) {
+    const response = await api.get(`/api/menu/missions/${mainCategory}/${subCategory}`)
+    return response.data
+  },
+
+  // 更新菜单配置
+  async updateMenuConfig(configData: any) {
+    const response = await api.post('/api/menu/config', { config_data: configData })
+    return response.data
+  },
+
+  // 验证菜单配置
+  async validateMenuConfig() {
+    const response = await api.get('/api/menu/validate')
     return response.data
   }
 }

@@ -95,6 +95,7 @@ export interface Mission {
   id: string
   name: string
   type: "commission" | "night_sailing" | "commission_letter"
+  infinity: Boolean
   level: number
   description?: string
   requirements?: Record<string, any>
@@ -239,4 +240,67 @@ import { MISSION_TYPES_CONFIG as MissionTypes, MENU_STRUCTURE_CONFIG as MenuStru
 export const DEFAULT_MENU_CONFIG: MenuConfig = {
   missionTypes: MissionTypes,
   menu: MenuStructure,
+}
+
+// ==================
+// 键位配置相关类型
+// ==================
+
+// 键位映射类型
+export interface KeyBinding {
+  action: string
+  key: string
+}
+
+// 键位配置文件类型
+export interface KeyBindingProfile {
+  profile_id: string
+  name: string
+  description: string
+  is_current?: boolean
+  bindings: Record<string, string>
+}
+
+// 键位配置响应类型
+export interface KeyBindingsResponse {
+  bindings: Record<string, string>
+  action_names: Record<string, string>
+  key_names: Record<string, string>
+  current_profile: string
+}
+
+// 键位更新请求类型
+export interface KeyBindingUpdateRequest {
+  action: string
+  key: string
+}
+
+// 键位执行请求类型
+export interface KeyBindingExecuteRequest {
+  action: string
+  press_type?: "press" | "down" | "up"
+  duration?: number
+}
+
+// 键位配置文件列表响应类型
+export interface KeyBindingProfilesResponse {
+  profiles: KeyBindingProfile[]
+  current: string
+}
+
+// 新建键位配置文件请求类型
+export interface CreateKeyBindingProfileRequest {
+  profile_id: string
+  name: string
+  description?: string
+}
+
+// 键位配置文件导入导出类型
+export interface KeyBindingExport {
+  bindings: Record<string, string>
+  profile_name?: string
+  action_names: Record<string, string>
+  key_names: Record<string, string>
+  export_time: string
+  version?: string
 }

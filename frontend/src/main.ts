@@ -28,7 +28,7 @@ app.use(router)
 app.use(Antd)
 
 // 全局错误处理
-app.config.errorHandler = (err: unknown, instance: any, info: string): void => {
+app.config.errorHandler = (err: unknown, _instance: any, info: string): void => {
   console.error('Vue 全局错误:', err, info)
 
   // 在开发环境显示详细错误信息
@@ -41,7 +41,7 @@ app.config.errorHandler = (err: unknown, instance: any, info: string): void => {
 }
 
 // 全局警告处理
-app.config.warnHandler = (msg: string, instance: any, trace: string): void => {
+app.config.warnHandler = (msg: string, _instance: any, trace: string): void => {
   if (import.meta.env.DEV) {
     console.warn('Vue 警告:', msg, trace)
   }

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import type { MenuConfig, SubCategory } from "@/types"
+import { menuApi } from "@/utils/api"
 import { MISSION_TYPES_CONFIG, MENU_STRUCTURE_CONFIG } from "@/constants"
 
 export const useMenuStore = defineStore("menu", () => {
@@ -57,14 +58,8 @@ export const useMenuStore = defineStore("menu", () => {
       loading.value = true
       error.value = null
 
-      // 从静态文件加载配置
-      const response = await fetch("/menu_config.json")
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const data: MenuConfig = await response.json()
+      // 从后端API加载配置
+      const data = await menuApi.getMenuConfig()
 
       // 验证数据格式
       if (!data.missionTypes || !data.menu?.commission) {
@@ -128,6 +123,21 @@ export const useMenuStore = defineStore("menu", () => {
     await loadMenuConfig()
   }
 
+  // 更新菜单配置
+  const updateMenuConfig = async (newConfig: MenuConfig): Promise<boolean> => {
+    try {
+      await menuApi.updateMenuConfig(newConfig)
+      config.value = newConfig
+      console.log("菜单配置更新成功")
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "更新菜单配置失败"
+      console.error("更新菜单配置失败:", err)
+      error.value = errorMessage
+      return false
+    }
+  }
+
   return {
     // 状态
     loading,
@@ -148,5 +158,6 @@ export const useMenuStore = defineStore("menu", () => {
     clearError,
     reset,
     reloadConfig,
+    updateMenuConfig,
   }
 })

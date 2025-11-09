@@ -25,7 +25,7 @@ export const useAppStore = defineStore('app', () => {
   // 计算属性
   const isBackendReady = computed<boolean>(() => backendConfig.value !== null)
   const isElectron = computed<boolean>(() => {
-    return typeof window !== 'undefined' && window.electronAPI
+    return typeof window !== 'undefined' && !!window.electronAPI
   })
 
   // 方法
@@ -68,7 +68,7 @@ export const useAppStore = defineStore('app', () => {
   const setDefaultBackendConfig = (): void => {
     backendConfig.value = {
       host: '127.0.0.1',
-      port: 8000,
+      port: 8001,
       timeout: 10000,
       retries: 3
     }
@@ -97,7 +97,6 @@ export const useAppStore = defineStore('app', () => {
         throw new Error('系统信息格式错误')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '获取系统信息失败'
       console.warn('获取系统信息失败:', err)
       // 不抛出错误，允许应用继续运行
     }
