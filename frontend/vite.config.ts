@@ -51,4 +51,12 @@ export default defineConfig({
   },
   // 减少弃用警告
   logLevel: "warn",
+  // Sass 配置 - 使用现代 API
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: "modern-compiler"
+      }
+    }
+  },
 })

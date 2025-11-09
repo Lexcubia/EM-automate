@@ -104,22 +104,6 @@ const levels = ref<Mission[]>([]);
 const monstersByLevel = ref<Record<string, MissionLevel[]>>({});
 
 
-// 任务类型颜色映射
-const typeColorMap: Record<string, string> = {
-  scout_endless: "blue",
-  avoidance: "green",
-  expulsion: "red",
-  explore_endless: "purple",
-  mediate: "cyan",
-  drive_off: "orange",
-  escort: "gold",
-  pursuit: "volcano",
-  defend_endless: "magenta",
-  migrate: "geekblue",
-  character: "pink",
-  weapon: "gray",
-  magic_wedge: "darkred"
-};
 
 // 计算属性
 const currentLevelData = computed(() => {
@@ -143,9 +127,6 @@ const missionTypeDisplay = (type: string): string => {
   return menuStore.getMissionTypeDisplay(type)
 }
 
-const getTypeColor = (type: string): string => {
-  return typeColorMap[type] || "default";
-};
 
 const loadLevels = async () => {
   try {
