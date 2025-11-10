@@ -1,0 +1,29 @@
+{
+    "tasks": [
+        {
+            "id": "1762785911321_15mv593rf",
+            "name": "LV20 - 爆破 疾冲秽兽 + Test Macro",
+            "type": "commission",
+            "category": "commission",
+            "sub_category": "night_sailing_manual",
+            "mission_key": "lv20",
+            "selected_level": "bomb_dash_beast",
+            "level_display_name": "爆破 疾冲秽兽",
+            "run_count": 1,
+            "priority": 1,
+            "status": "pending",
+            "progress": 0,
+            "added_at": "2025-11-10T14:45:11.321Z",
+            "params": {
+                "mission_display_name": "LV20",
+                "mission_type": "drive_off",
+                "monster_display_name": "爆破 疾冲秽兽",
+                "monster_key": "bomb_dash_beast",
+                "macro_id": "888b2e5c-8a9f-42ae-bc64-07dfe9bdbb12",
+                "macro_name": "Test Macro",
+                "macro_steps_count": 2,
+                "macro_description": "This is a test macro"
+            }
+        }
+    ]
+}

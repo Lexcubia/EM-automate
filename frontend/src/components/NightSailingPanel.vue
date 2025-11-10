@@ -68,6 +68,40 @@
       <span class="count-help">1-99次</span>
     </div>
 
+    <!-- 宏序列选择 -->
+    <div class="macro-section">
+      <div class="section">
+        <h4>选择宏序列</h4>
+        <a-select
+          v-model:value="selectedMacro"
+          placeholder="选择要执行的宏序列（必需）"
+          style="width: 100%"
+          :loading="macrosLoading"
+          :disabled="macros.length === 0"
+        >
+          <a-select-option
+            v-for="macro in macros"
+            :key="macro.id"
+            :value="macro.id"
+            :disabled="!macro.enabled"
+          >
+            <div class="macro-option">
+              <span class="macro-name">{{ macro.name }}</span>
+              <span class="macro-info">{{ macro.steps.length }}步</span>
+            </div>
+          </a-select-option>
+        </a-select>
+        <div v-if="selectedMacro" class="macro-preview">
+          <div class="macro-description">
+            {{ selectedMacroObj?.description || '暂无描述' }}
+          </div>
+          <div class="macro-steps-preview">
+            {{ getMacroStepsPreview(selectedMacroObj?.steps || []) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="add-task-section">
       <a-button
         type="primary"
@@ -79,8 +113,11 @@
         <template #icon>
           <PlusOutlined />
         </template>
-        添加到队列
+        添加任务+宏到队列
       </a-button>
+      <div class="task-summary">
+        将添加：{{ currentLevelData?.displayName }} - {{ availableMonsters.find(m => m.key === selectedMonster)?.displayName }} + {{ selectedMacroObj?.name || '请选择宏' }}
+      </div>
     </div>
   </div>
 </template>
@@ -89,7 +126,8 @@
 import { ref, computed, onMounted } from "vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
 import { useMenuStore } from "@/stores/menu";
-import type { Mission, MissionLevel } from "@/types";
+import { macroApi } from "@/utils/api";
+import type { Mission, MissionLevel, MacroCommand, MacroStep } from "@/types";
 
 const emit = defineEmits(["task-selected"]);
 
@@ -103,6 +141,10 @@ const runCount = ref(1);
 const levels = ref<Mission[]>([]);
 const monstersByLevel = ref<Record<string, MissionLevel[]>>({});
 
+// 宏相关数据
+const selectedMacro = ref("");
+const macros = ref<MacroCommand[]>([]);
+const macrosLoading = ref(false);
 
 
 // 计算属性
@@ -118,8 +160,13 @@ const canAddTask = computed(() => {
   return (
     selectedLevel.value &&
     selectedMonster.value &&
+    selectedMacro.value &&
     runCount.value > 0
   );
+});
+
+const selectedMacroObj = computed(() => {
+  return macros.value.find(m => m.id === selectedMacro.value)
 });
 
 // 方法
@@ -156,6 +203,33 @@ const onLevelChange = () => {
   selectedMonster.value = "";
 };
 
+// 宏相关方法
+const loadMacros = async () => {
+  try {
+    macrosLoading.value = true
+    const response = await macroApi.getMacros()
+    macros.value = response.macros || []
+  } catch (error) {
+    console.error('加载宏列表失败:', error)
+  } finally {
+    macrosLoading.value = false
+  }
+}
+
+const getMacroStepsPreview = (steps: MacroStep[]) => {
+  if (steps.length === 0) return '无步骤'
+
+  const preview = steps.slice(0, 4).map(step => {
+    if (step.type === 'key') {
+      return `按键${step.key}`
+    } else {
+      return `延迟${step.delay}秒`
+    }
+  }).join(' → ')
+
+  return steps.length > 4 ? `${preview}...` : preview
+}
+
 const addTask = () => {
   if (!canAddTask.value) return;
 
@@ -165,30 +239,52 @@ const addTask = () => {
   const monster = availableMonsters.value.find((m) =>
     m.key === selectedMonster.value
   );
+  const macro = selectedMacroObj.value;
 
-  if (!monster) return;
+  if (!monster || !macro) return;
 
-  const task = {
+  // 创建带宏的任务
+  const task: any = {
+    id: `night_sailing_${level.key}_${monster.key}_${macro.id}_${Date.now()}`,
+    name: `${level.displayName} - ${monster.displayName} + ${macro.name}`,
+    type: 'commission',
+    category: 'commission',
+    sub_category: 'night_sailing_manual',
     mission_key: level.key,
-    display_name: `${level.displayName} - ${monster.displayName}`,
-    mission_type: level.type,
     selected_level: monster.key,
     level_display_name: monster.displayName,
     run_count: runCount.value,
-    category: "commission",
-    sub_category: "night_sailing_manual",
-  };
+    priority: 1,
+    status: 'pending' as const,
+    progress: 0,
+    added_at: new Date().toISOString(),
+    params: {
+      mission_display_name: level.displayName,
+      mission_type: level.type,
+      monster_display_name: monster.displayName,
+      monster_key: monster.key,
+      macro_id: macro.id,
+      macro_name: macro.name,
+      macro_steps_count: macro.steps.length,
+      macro_description: macro.description
+    }
+  }
+
   emit("task-selected", task);
 
   // 重置选择
   selectedLevel.value = "";
   selectedMonster.value = "";
+  selectedMacro.value = "";
   runCount.value = 1;
 };
 
 // 生命周期
 onMounted(async () => {
-  await loadLevels();
+  await Promise.all([
+    loadLevels(),
+    loadMacros()
+  ])
 });
 </script>
 
@@ -278,11 +374,63 @@ onMounted(async () => {
   margin: 20px 0;
 }
 
+/* 宏相关样式 */
+.macro-section {
+  margin-bottom: 16px;
+}
+
+.macro-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.macro-name {
+  font-weight: 500;
+}
+
+.macro-info {
+  font-size: 12px;
+  color: #999;
+}
+
+.macro-preview {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.macro-description {
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.macro-steps-preview {
+  color: #999;
+}
+
+.task-summary {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #1890ff;
+}
+
 @media (max-width: 768px) {
   .execution-count {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .task-summary {
+    font-size: 11px;
   }
 }
 </style>

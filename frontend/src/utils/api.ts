@@ -268,5 +268,53 @@ export const menuApi = {
   }
 }
 
+// 宏配置相关API
+export const macroApi = {
+  // 获取宏列表
+  async getMacros() {
+    const response = await api.get('/api/macros')
+    return response.data
+  },
+
+  // 创建宏
+  async createMacro(macroData: any) {
+    const response = await api.post('/api/macros', macroData)
+    return response.data
+  },
+
+  // 更新宏
+  async updateMacro(macroId: string, macroData: any) {
+    const response = await api.put(`/api/macros/${macroId}`, macroData)
+    return response.data
+  },
+
+  // 删除宏
+  async deleteMacro(macroId: string) {
+    const response = await api.delete(`/api/macros/${macroId}`)
+    return response.data
+  },
+
+  // 执行宏
+  async executeMacro(macroId: string, repeatCount: number = 1) {
+    const response = await api.post('/api/macros/execute', {
+      macro_id: macroId,
+      repeat_count: repeatCount
+    })
+    return response.data
+  },
+
+  // 导出宏配置
+  async exportMacros() {
+    const response = await api.get('/api/macros/export')
+    return response.data
+  },
+
+  // 导入宏配置
+  async importMacros(fileData: any) {
+    const response = await api.post('/api/macros/import', fileData)
+    return response.data
+  }
+}
+
 export { api }
 export type { ExtendedAxiosRequestConfig }

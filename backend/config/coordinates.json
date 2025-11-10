@@ -1,0 +1,63 @@
+{
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "navigation": {
+    "location_image": "location.png",
+    "description": "主导航页面，包含location.png中的'历练'文本检测"
+  },
+  "tabs": {
+    "commission": {
+      "name": "委托",
+      "images": {
+        "normal": "commision_tab_button.png",
+        "active": "commision_tab_button_active.png"
+      },
+      "position": ["190,150", "410,210"],
+      "description": "点击跳转到委托页面"
+    },
+    "night_sailing": {
+      "name": "夜航手册",
+      "images": {
+        "normal": "nightSailing_tab_button.png",
+        "active": "nightSailing_tab_button_active.png"
+      },
+      "position": ["410,150", "620,210"],
+      "description": "点击跳转到夜航手册页面"
+    },
+    "commission_letter": {
+      "name": "委托密函",
+      "images": {
+        "normal": "commisionLetter_tab_button.png",
+        "active": "commisionLetter_tab_button_active.png"
+      },
+      "position": ["620,150", "835,210"],
+      "description": "点击跳转到委托密函页面"
+    }
+  },
+  "night_sailing_levels": {
+    "description": "夜航手册等级按钮位置，采用检测文字方式校验是否在对应等级页",
+    "levels": {
+      "LV20": ["145,240", "229,324"],
+      "LV30": ["145,324", "229,408"],
+      "LV40": ["145,408", "229,492"],
+      "LV50": ["145,492", "229,576"],
+      "LV55": ["145,576", "229,660"],
+      "LV60": ["145,660", "229,744"],
+      "LV65": ["145,744", "229,828"],
+      "LV70": ["145,828", "229,912"],
+      "LV80": ["145,912", "229,996"]
+    }
+  },
+  "actions": {
+    "enter_dungeon": {
+      "position": ["960,540"],
+      "description": "进入副本，点击页面中心"
+    },
+    "back_button": {
+      "position": ["50,50"],
+      "description": "返回按钮"
+    }
+  }
+}

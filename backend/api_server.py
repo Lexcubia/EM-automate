@@ -10,14 +10,21 @@ from typing import List, Dict, Any, Optional
 import asyncio
 import threading
 import logging
+import time
 from pathlib import Path
 import sys
 
 # 导入核心模块
-from core.menu_manager import menu_manager
-from core.automation import GameAutomation
+from core.menu_manager import create_menu_manager
+from core.task_executor import task_executor, TaskFactory, Task
+from core.macro_engine import macro_engine
+from core.game_navigator import game_navigator
+from core.input_controller import input_controller
 from core.keybindings import keybindings_manager
 from core.menu_config import menu_config_manager
+
+# 创建菜单管理器实例
+menu_manager = create_menu_manager()
 
 # 配置日志
 logging.basicConfig(
@@ -42,18 +49,28 @@ app.add_middleware(
 )
 
 # 全局自动化实例
-automation_instance = GameAutomation()
+task_executor_instance = task_executor  # 使用统一的任务执行器
 is_running = False
 current_task = None
 task_thread = None
+current_progress = {"current": 0, "total": 0, "status": "", "is_running": False}
 
-# 数据模型
+# 数据模型 - 统一前后端格式
 class MissionTask(BaseModel):
-    mission_key: str
+    id: str
+    name: str
+    type: str
+    category: Optional[str] = None
+    sub_category: Optional[str] = None
+    mission_key: Optional[str] = None
     selected_level: Optional[str] = None
+    level_display_name: Optional[str] = None
     run_count: int = 1
-    mission_type: str
-    display_name: str
+    priority: int = 1
+    status: str = "pending"
+    progress: int = 0
+    added_at: str
+    params: Dict[str, Any] = {}
 
 class TaskQueue(BaseModel):
     tasks: List[MissionTask]
@@ -77,6 +94,22 @@ class KeyBindingExecute(BaseModel):
 # 菜单配置相关数据模型
 class MenuConfigUpdate(BaseModel):
     config_data: Dict[str, Any]
+
+# 宏配置相关数据模型
+class MacroCreate(BaseModel):
+    name: str
+    description: str = ""
+    steps: List[Dict[str, Any]]
+
+class MacroUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    steps: Optional[List[Dict[str, Any]]] = None
+    enabled: Optional[bool] = None
+
+class MacroExecute(BaseModel):
+    macro_id: str
+    repeat_count: int = 1
 
 # API路由
 @app.get("/")
@@ -150,7 +183,7 @@ async def get_subcategory_missions(main_category: str, sub_category: str):
 async def get_task_status():
     """获取当前任务状态"""
     global is_running, current_task
-    progress = automation_instance.get_progress()
+    progress = task_executor_instance.get_progress()
     return TaskProgress(
         current=progress.get("current", 0),
         total=progress.get("total", 0),
@@ -161,77 +194,135 @@ async def get_task_status():
 @app.post("/api/task/start")
 async def start_tasks(queue: TaskQueue, background_tasks: BackgroundTasks):
     """开始执行任务队列"""
-    global is_running, task_thread, current_task
+    return await start_tasks_execute(queue)
+
+@app.post("/api/tasks/execute")
+async def start_tasks_execute(request: Dict[str, Any]):
+    """开始执行任务队列 - 使用新的任务引擎"""
+    global is_running, task_thread, current_progress
 
     if is_running:
         raise HTTPException(status_code=400, detail="任务正在执行中")
 
-    if not queue.tasks:
+    tasks_data = request.get("tasks", [])
+    if not tasks_data:
         raise HTTPException(status_code=400, detail="任务队列为空")
 
     try:
-        # 转换任务格式
-        missions = []
-        for task in queue.tasks:
-            mission_data = {
-                "mission_key": task.mission_key,
-                "selected_level": task.selected_level,
-                "run_count": task.run_count
-            }
-            missions.append(mission_data)
+        # 使用TaskFactory转换前端数据为Task对象
+        tasks = [TaskFactory.create_from_frontend_data(task_data) for task_data in tasks_data]
+        total_runs = sum(task.run_count for task in tasks)
 
-        # 记录任务信息
-        task_names = []
-        total_tasks = 0
-        for m in missions:
-            mission_display = f"{m['mission_key']}"
-            if m['selected_level']:
-                mission_display += f"({m['selected_level']})"
-            mission_display += f" x{m['run_count']}"
-            task_names.append(mission_display)
-            total_tasks += m['run_count']
+        logger.info(f"开始执行任务队列，共{len(tasks)}个任务，{total_runs}次执行")
 
-        logger.info(f"API请求开始执行: {', '.join(task_names)} (总计{total_tasks}次)")
+        # 重置进度
+        current_progress = {
+            "current": 0,
+            "total": total_runs,
+            "status": "准备执行...",
+            "is_running": True
+        }
+
+        # 定义进度回调函数
+        def progress_callback(completed, total, status):
+            current_progress.update({
+                "current": completed,
+                "total": total,
+                "status": status,
+                "is_running": True
+            })
 
         # 在后台线程中执行任务
         def run_tasks():
-            global is_running, current_task
+            global is_running
             try:
                 is_running = True
-                automation_instance.run_automation(missions)
+                success = task_executor.execute_task_queue(tasks, progress_callback)
+
+                # 更新最终状态
+                current_progress.update({
+                    "status": "执行完成" if success else "执行失败",
+                    "is_running": False
+                })
+                logger.info(f"任务队列执行完成: {'成功' if success else '失败'}")
+
             except Exception as e:
-                logger.error(f"任务执行出错: {e}")
+                logger.error(f"任务队列执行异常: {e}")
+                current_progress.update({
+                    "status": f"执行异常: {str(e)}",
+                    "is_running": False
+                })
             finally:
                 is_running = False
-                current_task = None
 
-        task_thread = threading.Thread(target=run_tasks)
-        task_thread.daemon = True
+        # 启动后台任务
+        task_thread = threading.Thread(target=run_tasks, daemon=True)
         task_thread.start()
 
-        return {"message": "任务已开始执行", "total_tasks": total_tasks}
+        return {
+            "success": True,
+            "message": "任务执行已启动",
+            "data": {
+                "total_tasks": len(tasks),
+                "total_runs": total_runs
+            }
+        }
 
     except Exception as e:
-        logger.error(f"启动任务失败: {e}")
+        logger.error(f"启动任务执行失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+  
 @app.post("/api/task/stop")
 async def stop_tasks():
     """停止当前任务"""
-    global is_running, current_task
+    return await stop_tasks_execute()
+
+@app.post("/api/tasks/stop")
+async def stop_tasks_execute():
+    """停止当前任务 - 使用新的任务引擎"""
+    global is_running, current_progress
 
     if not is_running:
         raise HTTPException(status_code=400, detail="没有正在执行的任务")
 
     try:
         logger.info("API请求停止执行")
-        automation_instance.stop()
+
+        # 停止新任务引擎
+        task_executor.stop()
+
+        # 重置状态
         is_running = False
-        current_task = None
-        return {"message": "任务已停止"}
+        current_progress = {
+            "current": 0,
+            "total": 0,
+            "status": "已停止",
+            "is_running": False
+        }
+
+        return {"success": True, "message": "任务已停止"}
     except Exception as e:
         logger.error(f"停止任务失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tasks/progress")
+async def get_tasks_progress():
+    """获取任务进度 - 使用新的任务引擎"""
+    global current_progress
+
+    return {
+        "success": True,
+        "data": current_progress
+    }
+
+@app.get("/api/tasks/history")
+async def get_tasks_history():
+    """获取任务历史 - 统一接口"""
+    return {
+        "success": True,
+        "data": []
+    }
 
 @app.get("/api/system/info")
 async def get_system_info():
@@ -339,6 +430,118 @@ async def reset_keybindings():
         logger.error(f"重置配置失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# 宏配置相关API
+@app.get("/api/macros")
+async def get_macros():
+    """获取所有宏配置"""
+    try:
+        macros = macro_engine.get_all_macros()
+        return {
+            "macros": [macro.model_dump() for macro in macros]
+        }
+    except Exception as e:
+        logger.error(f"获取宏配置失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/macros")
+async def create_macro(request: MacroCreate):
+    """创建新宏"""
+    try:
+        macro = macro_engine.create_macro(
+            name=request.name,
+            description=request.description,
+            steps_data=request.steps
+        )
+        if macro:
+            return {"message": "宏创建成功", "macro_id": macro.id}
+        else:
+            raise HTTPException(status_code=400, detail="宏创建失败")
+    except Exception as e:
+        logger.error(f"创建宏失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/macros/{macro_id}")
+async def update_macro(macro_id: str, request: MacroUpdate):
+    """更新宏配置"""
+    try:
+        success = macro_engine.update_macro(
+            macro_id=macro_id,
+            name=request.name,
+            description=request.description,
+            steps_data=request.steps,
+            enabled=request.enabled
+        )
+        if success:
+            return {"message": "宏更新成功"}
+        else:
+            raise HTTPException(status_code=404, detail="宏不存在或更新失败")
+    except Exception as e:
+        logger.error(f"更新宏失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/macros/{macro_id}")
+async def delete_macro(macro_id: str):
+    """删除宏"""
+    try:
+        success = macro_engine.delete_macro(macro_id)
+        if success:
+            return {"message": "宏删除成功"}
+        else:
+            raise HTTPException(status_code=404, detail="宏不存在")
+    except Exception as e:
+        logger.error(f"删除宏失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/macros/execute")
+async def execute_macro(request: MacroExecute):
+    """执行宏"""
+    try:
+        success = macro_engine.execute_macro(
+            macro_id=request.macro_id,
+            repeat_count=request.repeat_count
+        )
+        if success:
+            return {"message": "宏执行成功"}
+        else:
+            raise HTTPException(status_code=400, detail="宏执行失败，请检查宏配置")
+    except Exception as e:
+        logger.error(f"执行宏失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/macros/export")
+async def export_macros():
+    """导出宏配置"""
+    try:
+        # 生成临时文件路径
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        file_path = f"{temp_dir}/macros_export_{int(time.time())}.json"
+
+        success = macro_engine.export_config(file_path)
+        if success:
+            # 读取文件内容并返回
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return content
+        else:
+            raise HTTPException(status_code=400, detail="宏配置导出失败")
+    except Exception as e:
+        logger.error(f"导出宏配置失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/macros/import")
+async def import_macros(config_data: Dict[str, Any]):
+    """导入宏配置"""
+    try:
+        success = macro_engine.import_config(config_data)
+        if success:
+            return {"message": "宏配置导入成功"}
+        else:
+            raise HTTPException(status_code=400, detail="宏配置导入失败")
+    except Exception as e:
+        logger.error(f"导入宏配置失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # 菜单配置相关API
 @app.get("/api/menu/config")
 async def get_menu_config():
@@ -440,4 +643,4 @@ async def validate_menu_config():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8001, log_level="info")
+    uvicorn.run(app, host="127.0.0.1", port=8001, log_level="debug")

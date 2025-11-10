@@ -1,43 +1,46 @@
+"""
+简化任务管理器 - 基于a.md的8步流程
+直接、简单、无复杂转换的任务状态管理
+"""
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '@/utils/api'
-import type { QueueItem, TaskHistory, ApiResponse } from '@/types'
+
+// 简化的任务项 - 对应后端Task结构
+interface SimpleTask {
+  id: string
+  name: string
+  category: string  // 对应TaskCategory
+  level: string
+  macro_id: string
+  run_count: number
+  params: Record<string, any>
+}
 
 // 任务进度状态
-interface TaskProgress {
+interface SimpleProgress {
   current: number
   total: number
   status: string
   isRunning: boolean
 }
 
-// 任务队列项（扩展类型）
-interface ExtendedQueueItem extends QueueItem {
-  run_count?: number
-  params?: Record<string, any>
-}
-
-export const useTaskStore = defineStore('task', () => {
+export const useSimpleTaskStore = defineStore('simpleTask', () => {
   // 状态
-  const taskQueue = ref<ExtendedQueueItem[]>([])
+  const taskQueue = ref<SimpleTask[]>([])
   const isRunning = ref<boolean>(false)
-  const currentProgress = ref<TaskProgress>({
+  const currentProgress = ref<SimpleProgress>({
     current: 0,
     total: 0,
-    status: '',
+    status: '空闲',
     isRunning: false
   })
-  const taskHistory = ref<TaskHistory[]>([])
-  const progressPollingInterval = ref<NodeJS.Timeout | null>(null)
   const error = ref<string | null>(null)
+  const progressPollingInterval = ref<NodeJS.Timeout | null>(null)
 
   // 计算属性
-  const totalTasks = computed<number>(() => {
-    return taskQueue.value.reduce((sum, task) => sum + (task.run_count || 1), 0)
-  })
-
-  const completedTasks = computed<number>(() => {
-    return currentProgress.value.current
+  const totalRuns = computed<number>(() => {
+    return taskQueue.value.reduce((sum, task) => sum + task.run_count, 0)
   })
 
   const progressPercentage = computed<number>(() => {
@@ -57,17 +60,22 @@ export const useTaskStore = defineStore('task', () => {
     return taskQueue.value.length > 0 && !isRunning.value
   })
 
+  // 任务分类到中文的映射
+  const categoryMap = {
+    'commission': '委托',
+    'night_sailing_manual': '夜航手册',
+    'commission_letter': '委托密函'
+  }
+
   // 方法
-  const addTask = (task: Omit<ExtendedQueueItem, 'id' | 'added_at'>): void => {
-    const taskWithId: ExtendedQueueItem = {
+  const addTask = (task: Omit<SimpleTask, 'id'>): void => {
+    const taskWithId: SimpleTask = {
       ...task,
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      added_at: new Date().toISOString(),
-      status: 'pending',
-      progress: 0
+      params: task.params || {}
     }
     taskQueue.value.push(taskWithId)
-    console.log('添加任务:', taskWithId)
+    console.log('添加简化任务:', taskWithId)
   }
 
   const removeTask = (taskId: string): void => {
@@ -78,27 +86,11 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const updateTask = (taskId: string, updates: Partial<ExtendedQueueItem>): void => {
+  const updateTask = (taskId: string, updates: Partial<SimpleTask>): void => {
     const task = taskQueue.value.find(task => task.id === taskId)
     if (task) {
       Object.assign(task, updates)
       console.log('更新任务:', task)
-    }
-  }
-
-  const moveTaskUp = (taskId: string): void => {
-    const index = taskQueue.value.findIndex(task => task.id === taskId)
-    if (index > 0) {
-      [taskQueue.value[index - 1], taskQueue.value[index]] =
-      [taskQueue.value[index], taskQueue.value[index - 1]]
-    }
-  }
-
-  const moveTaskDown = (taskId: string): void => {
-    const index = taskQueue.value.findIndex(task => task.id === taskId)
-    if (index < taskQueue.value.length - 1) {
-      [taskQueue.value[index], taskQueue.value[index + 1]] =
-      [taskQueue.value[index + 1], taskQueue.value[index]]
     }
   }
 
@@ -118,17 +110,21 @@ export const useTaskStore = defineStore('task', () => {
 
       error.value = null
       isRunning.value = true
+
+      // 重置进度
       currentProgress.value = {
         current: 0,
-        total: totalTasks.value,
+        total: totalRuns.value,
         status: '准备执行...',
         isRunning: true
       }
 
-      console.log('开始执行任务队列:', taskQueue.value)
+      console.log('开始执行简化任务队列:', taskQueue.value)
 
-      // 直接发送原始任务数据到后端，不做任何转换
-      const response = await api.post('/api/tasks/execute', { tasks: taskQueue.value })
+      // 直接发送任务数据到后端，不做任何转换
+      const response = await api.post('/api/tasks/execute', {
+        tasks: taskQueue.value
+      })
 
       if (!response.data?.success) {
         throw new Error(response.data?.message || '启动任务失败')
@@ -155,12 +151,12 @@ export const useTaskStore = defineStore('task', () => {
 
       await api.post('/api/tasks/stop')
 
-      // 完全重置状态到初始状态
+      // 重置状态
       isRunning.value = false
       currentProgress.value = {
         current: 0,
         total: 0,
-        status: '',
+        status: '已停止',
         isRunning: false
       }
       error.value = null
@@ -178,41 +174,9 @@ export const useTaskStore = defineStore('task', () => {
       currentProgress.value = {
         current: 0,
         total: 0,
-        status: '',
+        status: '已停止',
         isRunning: false
       }
-    }
-  }
-
-  const pauseExecution = async (): Promise<void> => {
-    try {
-      if (!isRunning.value) return
-
-      console.log('暂停任务执行')
-
-      await api.post('/api/tasks/pause')
-
-      currentProgress.value.status = '已暂停'
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '暂停任务失败'
-      console.error('暂停任务执行失败:', err)
-      error.value = errorMessage
-    }
-  }
-
-  const resumeExecution = async (): Promise<void> => {
-    try {
-      if (!isRunning.value) return
-
-      console.log('恢复任务执行')
-
-      await api.post('/api/tasks/resume')
-
-      currentProgress.value.status = '执行中'
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '恢复任务失败'
-      console.error('恢复任务执行失败:', err)
-      error.value = errorMessage
     }
   }
 
@@ -231,13 +195,13 @@ export const useTaskStore = defineStore('task', () => {
           }
 
           // 如果任务完成，停止轮询
-          if (progress.status === 'completed' || progress.status === 'failed') {
+          if (progress.status === '执行完成' ||
+              progress.status === '执行失败' ||
+              !progress.isRunning) {
             isRunning.value = false
             currentProgress.value.isRunning = false
             stopProgressPolling()
-
-            // 获取任务历史
-            await fetchTaskHistory()
+            console.log('任务执行完成:', progress.status)
           }
         }
       } catch (err) {
@@ -253,39 +217,6 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const fetchTaskHistory = async (): Promise<void> => {
-    try {
-      const response = await api.get<ApiResponse<TaskHistory[]>>('/api/tasks/history')
-
-      if (response.data?.success && response.data.data) {
-        taskHistory.value = response.data.data
-      }
-    } catch (err) {
-      console.error('获取任务历史失败:', err)
-    }
-  }
-
-  const clearHistory = async (): Promise<void> => {
-    try {
-      await api.delete('/api/tasks/history')
-      taskHistory.value = []
-      console.log('任务历史已清空')
-    } catch (err) {
-      console.error('清空任务历史失败:', err)
-    }
-  }
-
-  const retryTask = async (taskId: string): Promise<void> => {
-    try {
-      await api.post(`/api/tasks/${taskId}/retry`)
-      console.log('任务重试:', taskId)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '重试任务失败'
-      console.error('重试任务失败:', err)
-      error.value = errorMessage
-    }
-  }
-
   const clearError = (): void => {
     error.value = null
   }
@@ -298,10 +229,35 @@ export const useTaskStore = defineStore('task', () => {
     currentProgress.value = {
       current: 0,
       total: 0,
-      status: '',
+      status: '空闲',
       isRunning: false
     }
     error.value = null
+  }
+
+  // 从现有任务格式转换为简化格式
+  const convertFromLegacyTask = (legacyTask: any): SimpleTask => {
+    // 确定任务分类
+    let category = 'commission' // 默认
+    if (legacyTask.sub_category) {
+      if (legacyTask.sub_category.includes('commission')) {
+        category = 'commission'
+      } else if (legacyTask.sub_category.includes('night_sailing')) {
+        category = 'night_sailing_manual'
+      } else if (legacyTask.sub_category.includes('commission_letter')) {
+        category = 'commission_letter'
+      }
+    }
+
+    return {
+      id: legacyTask.id || '',
+      name: legacyTask.name || legacyTask.mission_key || '',
+      category: category,
+      level: legacyTask.selected_level || '',
+      macro_id: legacyTask.params?.macro_id || '',
+      run_count: legacyTask.run_count || 1,
+      params: legacyTask.params || {}
+    }
   }
 
   return {
@@ -309,32 +265,27 @@ export const useTaskStore = defineStore('task', () => {
     taskQueue,
     isRunning,
     currentProgress,
-    taskHistory,
     error,
 
     // 计算属性
-    totalTasks,
-    completedTasks,
+    totalRuns,
     progressPercentage,
     canStart,
     canStop,
     canClear,
 
+    // 工具
+    categoryMap,
+
     // 方法
     addTask,
     removeTask,
     updateTask,
-    moveTaskUp,
-    moveTaskDown,
     clearQueue,
     startExecution,
     stopExecution,
-    pauseExecution,
-    resumeExecution,
-    fetchTaskHistory,
-    clearHistory,
-    retryTask,
     clearError,
-    reset
+    reset,
+    convertFromLegacyTask
   }
 })

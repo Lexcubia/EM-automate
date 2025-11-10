@@ -15,10 +15,19 @@
       >
         <div class="task-content">
           <div class="task-info">
-            <div class="task-name">{{ task.display_name || task.name }}</div>
+            <div class="task-name">{{ getCleanTaskName(task) }}</div>
             <div class="task-meta">
               <a-tag size="small" color="blue">
-                {{ missionTypeDisplay(task.mission_type || task.type || '') }}
+                {{ missionTypeDisplay(task.params?.mission_type || task.type || '') }}
+                
+              </a-tag>
+              <!-- 宏名称tag -->
+              <a-tag
+                v-if="task.params?.macro_name"
+                size="small"
+                color="purple"
+              >
+                {{ task.params.macro_name }}
               </a-tag>
               <span class="task-count">x{{ task.run_count || 1 }}</span>
             </div>
@@ -169,6 +178,13 @@ const estimatedTime = computed(() => {
 // 方法
 const missionTypeDisplay = (type: string): string => {
   return menuStore.getMissionTypeDisplay(type)
+}
+
+const getCleanTaskName = (task: QueueTask): string => {
+  const name = task.display_name || task.name || ''
+  // 移除宏名称部分（格式：原名称 + 宏名称）
+  const cleanName = name.split(' + ')[0].trim()
+  return cleanName
 }
 
 const removeTask = (taskId: string): void => {

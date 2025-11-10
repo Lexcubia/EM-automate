@@ -66,6 +66,40 @@
       <span class="count-help">1-99次</span>
     </div>
 
+    <!-- 宏序列选择 -->
+    <div class="macro-section">
+      <div class="section">
+        <h4>选择宏序列</h4>
+        <a-select
+          v-model:value="selectedMacro"
+          placeholder="选择要执行的宏序列（必需）"
+          style="width: 100%"
+          :loading="macrosLoading"
+          :disabled="macros.length === 0"
+        >
+          <a-select-option
+            v-for="macro in macros"
+            :key="macro.id"
+            :value="macro.id"
+            :disabled="!macro.enabled"
+          >
+            <div class="macro-option">
+              <span class="macro-name">{{ macro.name }}</span>
+              <span class="macro-info">{{ macro.steps.length }}步</span>
+            </div>
+          </a-select-option>
+        </a-select>
+        <div v-if="selectedMacro" class="macro-preview">
+          <div class="macro-description">
+            {{ selectedMacroObj?.description || '暂无描述' }}
+          </div>
+          <div class="macro-steps-preview">
+            {{ getMacroStepsPreview(selectedMacroObj?.steps || []) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 添加按钮 -->
     <div class="add-task-section">
       <a-button
@@ -78,8 +112,11 @@
         <template #icon>
           <PlusOutlined />
         </template>
-        添加到队列
+        添加任务+宏到队列
       </a-button>
+      <div class="task-summary">
+        将添加：{{ currentMission?.displayName }}({{ availableLevels.find(l => l.key === selectedLevel)?.displayName }}) + {{ selectedMacroObj?.name || '请选择宏' }}
+      </div>
     </div>
 
     <!-- 快速添加 -->
@@ -109,7 +146,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { useMenuStore } from '@/stores/menu'
-import type { Mission } from '@/types'
+import { macroApi } from '@/utils/api'
+import type { Mission, MacroCommand, MacroStep } from '@/types'
 
 const emit = defineEmits(['task-selected'])
 
@@ -122,6 +160,11 @@ const selectedLevel = ref('')
 const runCount = ref(1)
 const missions = ref<Mission[]>([])
 
+// 宏相关数据
+const selectedMacro = ref('')
+const macros = ref<MacroCommand[]>([])
+const macrosLoading = ref(false)
+
 // 计算属性
 const currentMission = computed(() => {
   return missions.value.find(m => m.key === selectedMission.value)
@@ -132,8 +175,14 @@ const availableLevels = computed(() => {
 })
 
 const canAddTask = computed(() => {
-  return selectedMission.value && runCount.value > 0 && runCount.value <= 99
+  return selectedMission.value && selectedLevel.value && selectedMacro.value && runCount.value > 0 && runCount.value <= 99
 })
+
+const selectedMacroObj = computed(() => {
+  return macros.value.find(m => m.id === selectedMacro.value)
+})
+
+// canAddMacroTask 不再需要，因为宏现在是可选的附加项
 
 // 方法
 const loadMissions = async () => {
@@ -161,18 +210,34 @@ const addTask = () => {
 
   const mission = currentMission.value
   const level = availableLevels.value.find(l => l.key === selectedLevel.value)
+  const macro = selectedMacroObj.value
 
-  if (!mission || !level) return
+  if (!mission || !level || !macro) return
 
+  // 创建带宏的任务
   const task = {
+    id: `commission_${mission.key}_${level.key}_${macro.id}_${Date.now()}`,
+    name: `${mission.displayName}(${level.displayName}) + ${macro.name}`,
+    type: 'commission',
+    category: 'commission',
+    sub_category: 'daily_commission',
     mission_key: mission.key,
-    display_name: `${mission.displayName}(${level.displayName})`,
-    mission_type: mission.type,
     selected_level: level.key,
     level_display_name: level.displayName,
     run_count: runCount.value,
-    category: 'commission',
-    sub_category: 'daily_commission'
+    priority: 1,
+    status: 'pending' as const,
+    progress: 0,
+    added_at: new Date().toISOString(),
+    params: {
+      mission_display_name: mission.displayName,
+      mission_type: mission.type,
+      infinity: mission.infinity,
+      macro_id: macro.id,
+      macro_name: macro.name,
+      macro_steps_count: macro.steps.length,
+      macro_description: macro.description
+    }
   }
 
   emit('task-selected', task)
@@ -180,6 +245,7 @@ const addTask = () => {
   // 重置选择
   selectedMission.value = ''
   selectedLevel.value = ''
+  selectedMacro.value = ''
   runCount.value = 1
 }
 
@@ -221,9 +287,41 @@ const quickAddSelectedMission = () => {
   })
 }
 
+// 宏相关方法
+const loadMacros = async () => {
+  try {
+    macrosLoading.value = true
+    const response = await macroApi.getMacros()
+    macros.value = response.macros || []
+  } catch (error) {
+    console.error('加载宏列表失败:', error)
+  } finally {
+    macrosLoading.value = false
+  }
+}
+
+const getMacroStepsPreview = (steps: MacroStep[]) => {
+  if (steps.length === 0) return '无步骤'
+
+  const preview = steps.slice(0, 4).map(step => {
+    if (step.type === 'key') {
+      return `按键${step.key}`
+    } else {
+      return `延迟${step.delay}秒`
+    }
+  }).join(' → ')
+
+  return steps.length > 4 ? `${preview}...` : preview
+}
+
+// addMacroTask 方法不再需要，因为宏现在是任务的附加项
+
 // 生命周期
 onMounted(async () => {
-  await loadMissions()
+  await Promise.all([
+    loadMissions(),
+    loadMacros()
+  ])
 
   // 预加载任务类型显示名称
   const missionTypes = [...new Set(missions.value.map(m => m.type))]
@@ -304,12 +402,64 @@ onMounted(async () => {
   margin-top: auto;
 }
 
+/* 宏相关样式 */
+.macro-section {
+  margin-bottom: 16px;
+}
+
+.macro-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.macro-name {
+  font-weight: 500;
+}
+
+.macro-info {
+  font-size: 12px;
+  color: #999;
+}
+
+.macro-preview {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.macro-description {
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.macro-steps-preview {
+  color: #999;
+}
+
+.task-summary {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #1890ff;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .execution-count {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .task-summary {
+    font-size: 11px;
   }
 }
 </style>

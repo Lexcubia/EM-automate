@@ -116,6 +116,14 @@ export interface QueueItem {
   started_at?: string
   completed_at?: string
   error?: string
+  // 新增字段以支持不同类型的任务
+  category?: string  // 任务分类: 'commission', 'macro', 'manual'
+  sub_category?: string  // 子分类
+  mission_key?: string  // 任务键值
+  selected_level?: string  // 选择的等级
+  run_count?: number  // 执行次数
+  macro_id?: string  // 宏ID（当type为macro时使用）
+  params?: Record<string, any>  // 额外参数
 }
 
 // 键盘映射类型
@@ -128,17 +136,51 @@ export interface KeyboardMapping {
   enabled: boolean
 }
 
-// 宏命令类型
+// 宏步骤类型
+export interface MacroStep {
+  id: string
+  type: 'key' | 'delay'
+  key?: string  // 当 type 为 'key' 时使用
+  delay?: number  // 延迟时间（秒）
+  press_type?: 'press' | 'down' | 'up'  // 按键类型
+  duration?: number  // 按键持续时间（秒）
+}
+
+// 宏序列类型
 export interface MacroCommand {
   id: string
   name: string
   description?: string
-  commands: Array<{
-    type: string
-    params: Record<string, any>
-    delay?: number
-  }>
+  steps: MacroStep[]
   enabled: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+// 宏执行请求类型
+export interface MacroExecuteRequest {
+  macro_id: string
+  repeat_count?: number  // 重复次数
+}
+
+// 宏列表响应类型
+export interface MacroListResponse {
+  macros: MacroCommand[]
+}
+
+// 创建宏请求类型
+export interface CreateMacroRequest {
+  name: string
+  description?: string
+  steps: Omit<MacroStep, 'id'>[]
+}
+
+// 更新宏请求类型
+export interface UpdateMacroRequest {
+  name?: string
+  description?: string
+  steps?: Omit<MacroStep, 'id'>[]
+  enabled?: boolean
 }
 
 // API 错误类型

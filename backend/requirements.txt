@@ -7,3 +7,5 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
 python-multipart>=0.0.6
+# Windows API 支持（用于获取准确的客户端区域大小）
+pywin32>=306

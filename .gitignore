@@ -46,8 +46,6 @@ Thumbs.db
 # Project specific
 erm_auto.log
 erm_backend.log
-images/
-screenshots/
 
 # Temporary files
 *.tmp

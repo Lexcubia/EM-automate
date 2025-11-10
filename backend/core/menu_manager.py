@@ -48,10 +48,10 @@ class MenuManager:
         初始化菜单管理器
 
         Args:
-            config_file: 菜单配置文件路径，默认为项目根目录下的menu_config.json
+            config_file: 菜单配置文件路径，默认为config目录下的menu_config.json
         """
         if config_file is None:
-            config_file = Path(__file__).parent.parent.parent / "menu_config.json"
+            config_file = Path(__file__).parent.parent / "config" / "menu_config.json"
 
         self.config_file = config_file
         self.mission_types = {}
@@ -68,11 +68,68 @@ class MenuManager:
             self.menu_structure = config.get('menu', {})
 
         except FileNotFoundError:
-            raise FileNotFoundError(f"菜单配置文件未找到: {self.config_file}")
+            # 配置文件不存在时，使用默认配置
+            print(f"警告: 菜单配置文件未找到: {self.config_file}")
+            print("使用默认菜单配置")
+            self._load_default_config()
         except json.JSONDecodeError as e:
-            raise ValueError(f"菜单配置文件格式错误: {e}")
+            print(f"警告: 菜单配置文件格式错误: {e}")
+            print("使用默认菜单配置")
+            self._load_default_config()
         except Exception as e:
-            raise RuntimeError(f"加载菜单配置失败: {e}")
+            print(f"警告: 加载菜单配置失败: {e}")
+            print("使用默认菜单配置")
+            self._load_default_config()
+
+    def _load_default_config(self):
+        """加载默认菜单配置"""
+        # 基于coordinates.json中的tabs配置生成默认菜单
+        self.mission_types = {
+            "commission": "委托",
+            "night_sailing": "夜航手册",
+            "commission_letter": "委托密函"
+        }
+
+        self.menu_structure = {
+            "game_missions": {
+                "displayName": "游戏任务",
+                "children": {
+                    "daily_missions": {
+                        "displayName": "日常任务",
+                        "missions": [
+                            {
+                                "key": "commission",
+                                "displayName": "委托",
+                                "type": "commission",
+                                "levels": []
+                            },
+                            {
+                                "key": "night_sailing",
+                                "displayName": "夜航手册",
+                                "type": "night_sailing",
+                                "levels": [
+                                    {"key": "LV20", "displayName": "LV20"},
+                                    {"key": "LV30", "displayName": "LV30"},
+                                    {"key": "LV40", "displayName": "LV40"},
+                                    {"key": "LV50", "displayName": "LV50"},
+                                    {"key": "LV55", "displayName": "LV55"},
+                                    {"key": "LV60", "displayName": "LV60"},
+                                    {"key": "LV65", "displayName": "LV65"},
+                                    {"key": "LV70", "displayName": "LV70"},
+                                    {"key": "LV80", "displayName": "LV80"}
+                                ]
+                            },
+                            {
+                                "key": "commission_letter",
+                                "displayName": "委托密函",
+                                "type": "commission_letter",
+                                "levels": []
+                            }
+                        ]
+                    }
+                }
+            }
+        }
 
     def get_main_categories(self) -> List[str]:
         """获取主分类显示名称列表"""
@@ -225,5 +282,20 @@ class MenuManager:
         return f"MenuManager(main_categories={self.get_main_categories()})"
 
 
-# 全局菜单管理器实例
-menu_manager = MenuManager()
+# 创建默认实例，但允许失败
+def create_menu_manager() -> MenuManager:
+    """创建菜单管理器实例"""
+    try:
+        return MenuManager()
+    except Exception as e:
+        print(f"创建菜单管理器失败: {e}")
+        # 创建一个最小可用实例
+        manager = MenuManager.__new__(MenuManager)
+        manager.mission_types = {
+            "commission": "委托",
+            "night_sailing": "夜航手册",
+            "commission_letter": "委托密函"
+        }
+        manager.menu_structure = {}
+        manager.config_file = ""
+        return manager
